@@ -1,38 +1,118 @@
-.App {
+/* GLOBAL */
+body {
+  font-family: Arial, sans-serif;
+  background: #f7f8fa;
+  margin: 0;
+  padding: 0;
+}
+
+.container {
+  width: 96%;
+  margin: auto;
+  padding-top: 25px;
+}
+
+h2 {
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 6px;
+  color: #1b2735;
+}
+
+p {
+  font-size: 15px;
+  color: #444;
+}
+
+/* BUTTON */
+button {
+  background: #2f5fda;
+  border: 1px solid #224cb1;
+  padding: 6px 11px;
+  border-radius: 4px;
+  cursor: pointer;
+  color: white;
+  font-size: 14px;
+  margin-right: 8px;
+  transition: 0.2s;
+}
+
+button:hover {
+  background: #264fb8;
+  transform: scale(1.04);
+}
+
+/* SEARCH BOX */
+input {
+  padding: 5px 10px;
+  border: 1px solid #aaa;
+  border-radius: 3px;
+  margin-top: 12px;
+  font-size: 14px;
+}
+
+/* TABLE */
+table {
+  border-collapse: collapse;
+  width: 100%;
+  margin-top: 12px;
+  border: 1px solid #999;
+}
+
+/* STICKY HEADER */
+th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: #d6dbe4;
+  padding: 7px;
+  border: 2px solid #777;
+  font-size: 15px;
+  font-weight: 700;
   text-align: center;
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
+td {
+  border: 1px solid #c6c6c6;
+  padding: 6px;
+  font-size: 14px;
+  text-align: center;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
+/* EVEN ROW */
+tr:nth-child(even) {
+  background: #f3f4f7;
 }
 
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
+/* HOVER ROW */
+tr:hover {
+  background: #e8ebef;
 }
 
-.App-link {
-  color: #61dafb;
+/* STATUS COLORS */
+.status-critical {
+  color: red;
+  font-weight: bold;
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+/* CRITICAL entire row */
+tr.critical-row {
+  background: #ffe5e5 !important;
+}
+
+/* LOW entire row */
+tr.low-row {
+  background: #fff7da !important;
+}
+
+/* SAFE status */
+.status-safe {
+  color: green;
+  font-weight: bold;
+}
+
+/* LOW status text */
+.status-low {
+  color: #d78a00;
+  font-weight: bold;
 }
