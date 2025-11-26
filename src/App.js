@@ -1,107 +1,117 @@
-import React, { useState, useEffect } from "react";
-import * as tf from "@tensorflow/tfjs";
+import React, { useState } from "react";
 import "./App.css";
+import { originalProducts } from "./data";
 
 function App() {
-  const [products, setProducts] = useState([]);
-  const [model, setModel] = useState(null);
-  const [searchTerm, setSearchTerm] = useState("");
-
-  // Fetch dummy products
-  useEffect(() => {
-    fetch("https://dummyjson.com/products?limit=100")
-      .then((res) => res.json())
-      .then((data) => {
-        const formatted = data.products.map((p) => ({
-          name: p.title,
-          current: Math.floor(Math.random() * 50),
-          avgSales: Math.floor(Math.random() * 60),
-          leadTime: Math.floor(Math.random() * 10) + 1,
-          status: "",
-        }));
-        setProducts(formatted);
-      });
-  }, []);
-
-  // train AI model using TensorFlow
-  const trainModel = async () => {
-    const xs = tf.tensor2d([
-      [40, 10, 2],
-      [5, 40, 6],
-      [30, 20, 4],
-      [2, 30, 8],
-    ]);
-
-    const ys = tf.tensor2d([
-      [0],
-      [1],
-      [0],
-      [1],
-    ]);
-
-    const mdl = tf.sequential();
-    mdl.add(tf.layers.dense({ inputShape: [3], units: 6, activation: "relu" }));
-    mdl.add(tf.layers.dense({ units: 1, activation: "sigmoid" }));
-
-    mdl.compile({ loss: "binaryCrossentropy", optimizer: "adam" });
-
-    await mdl.fit(xs, ys, { epochs: 200 });
-
-    setModel(mdl);
-    return mdl;
-  };
-
-  // generate AI forecast
-  const generateForecast = async () => {
-    let ai = model || (await trainModel());
-
-    const updated = products.map((p) => {
-      const input = tf.tensor2d([[p.current, p.avgSales, p.leadTime]]);
-      const prediction = ai.predict(input).dataSync()[0];
-
-      let status = "SAFE";
-      if (prediction > 0.75) status = "CRITICAL";
-      else if (prediction > 0.45) status = "LOW";
-
-      return { ...p, status };
-    });
-
-    setProducts(updated);
-  };
-
-  // sorting
-  const sortInventoryDesc = () => {
-    setProducts([...products].sort((a, b) => b.current - a.current));
-  };
-
-  // filter reorder only
-  const showReorderOnly = () => {
-    setProducts(products.filter((p) => p.status === "CRITICAL" || p.status === "LOW"));
-  };
-
-  // search
-  const filtered = products.filter((p) =>
-    p.name.toLowerCase().includes(searchTerm.toLowerCase())
+  const [master, setMaster] = useState(() =>
+    originalProducts.map(p => ({ ...p }))
   );
 
-  const criticalCount = products.filter((p) => p.status === "CRITICAL").length;
+  const [displayed, setDisplayed] = useState(() =>
+    originalProducts.map(p => ({ ...p }))
+  );
+
+  const [search, setSearch] = useState("");
+
+  // ⭐ Balanced reorder logic (YES + NO)
+  const needsReorder = (p) => p.stock < p.avgSales;
+  const notNeedingReorder = (p) => p.stock >= p.avgSales;
+
+  // ⭐ Generate Forecast
+  const generateForecast = () => {
+    const updated = master.map(p => ({
+      ...p,
+      stock: Math.floor(Math.random() * 61),
+      avgSales: Math.floor(Math.random() * 56) + 5,
+      leadTime: Math.floor(Math.random() * 14) + 1
+    }));
+
+    setMaster(updated);
+    setDisplayed(updated);
+  };
+
+  const sortInventoryDesc = () => {
+    const sorted = [...displayed].sort((a, b) => b.stock - a.stock);
+    setDisplayed(sorted);
+  };
+
+  // ⭐ Show reorder only (YES)
+  const showReorderOnly = () => {
+    const filtered = master.filter(p => needsReorder(p));
+    setDisplayed(filtered);
+  };
+
+  // ⭐ NEW: Show NOT needing reorder (NO)
+  const showNoReorderOnly = () => {
+    const filtered = master.filter(p => notNeedingReorder(p));
+    setDisplayed(filtered);
+  };
+
+  // ⭐ Reset
+  const resetProducts = () => {
+    const reset = originalProducts.map(p => ({ ...p }));
+    setMaster(reset);
+    setDisplayed(reset);
+    setSearch("");
+  };
+
+  // ⭐ Search logic
+  const applySearch = (value) => {
+    setSearch(value);
+    const filtered = master.filter(p =>
+      p.name.toLowerCase().includes(value.toLowerCase())
+    );
+    setDisplayed(filtered);
+  };
 
   return (
     <div className="container">
-
       <h2>Inventory Forecast Dashboard</h2>
-      <p>Total products needing reorder: {criticalCount}</p>
 
-      <button onClick={generateForecast}>Generate Forecast</button>
-      <button onClick={sortInventoryDesc}>Sort by Inventory Desc</button>
-      <button onClick={showReorderOnly}>Show Reorder Only</button>
+      <p>Total products needing reorder: {master.filter(needsReorder).length}</p>
 
-      <br />
+      <p style={{ marginBottom: "10px", fontSize: "15px", fontWeight: "600" }}>
+        Products: {displayed.length}
+      </p>
+
+      <div style={{ marginBottom: 8 }}>
+        <button onClick={generateForecast}>Generate Forecast</button>
+        <button onClick={sortInventoryDesc} style={{ marginLeft: 8 }}>
+          Sort by Inventory Desc
+        </button>
+        <button onClick={showReorderOnly} style={{ marginLeft: 8 }}>
+          Show Reorder Only
+        </button>
+
+        {/* ⭐ NEW BUTTON: Show NO only */}
+        <button
+          onClick={showNoReorderOnly}
+          style={{
+            marginLeft: 8,
+            background: "#28a745",
+            color: "white"
+          }}
+        >
+          Show Not Needing Reorder
+        </button>
+
+        <button
+          onClick={resetProducts}
+          style={{
+            marginLeft: 8,
+            background: "#6c757d",
+            color: "white"
+          }}
+        >
+          Reset Products
+        </button>
+      </div>
 
       <input
+        type="text"
         placeholder="Search product..."
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
+        value={search}
+        onChange={(e) => applySearch(e.target.value)}
       />
 
       <table>
@@ -116,34 +126,33 @@ function App() {
         </thead>
 
         <tbody>
-          {filtered.map((p, i) => (
-            <tr
-              key={i}
-              className={
-                p.status === "CRITICAL"
-                  ? "critical-row"
-                  : p.status === "LOW"
-                  ? "low-row"
-                  : ""
-              }
-            >
-              <td>{p.name}</td>
-              <td>{p.current}</td>
-              <td>{p.avgSales}</td>
-              <td>{p.leadTime}</td>
-              <td
-                className={
-                  p.status === "CRITICAL"
-                    ? "status-critical"
-                    : p.status === "LOW"
-                    ? "status-low"
-                    : "status-safe"
-                }
+          {displayed.map((p, idx) => {
+            const reorder = needsReorder(p);
+
+            return (
+              <tr
+                key={idx}
+                style={{
+                  background: reorder ? "#ffe5e5" : "#eaffea"
+                }}
               >
-                {p.status}
-              </td>
-            </tr>
-          ))}
+                <td>{p.name}</td>
+                <td style={{ textAlign: "center" }}>{p.stock}</td>
+                <td style={{ textAlign: "center" }}>{p.avgSales}</td>
+                <td style={{ textAlign: "center" }}>{p.leadTime}</td>
+
+                <td
+                  style={{
+                    color: reorder ? "red" : "green",
+                    fontWeight: "bold",
+                    textAlign: "center"
+                  }}
+                >
+                  {reorder ? "YES" : "NO"}
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>
